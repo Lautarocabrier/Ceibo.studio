@@ -1,0 +1,38 @@
+// Prisma Schema para Ceibo Backend
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         String    @default("CUSTOMER") // SUPERADMIN | CUSTOMER
+  clientId     String?
+  client       Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([role])
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  phone       String
+  contactName String
+  status      String   @default("active") // active | inactive
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+}
