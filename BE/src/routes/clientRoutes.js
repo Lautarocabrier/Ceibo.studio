@@ -20,4 +20,8 @@ router.get('/:id', clientController.getById);
 // Actualizar estado de cliente (active / inactive)
 router.patch('/:id/status', clientController.updateStatus);
 
+// Crear y eliminar admins del negocio
+router.post('/:id/users', clientController.createUser);
+router.delete('/:id/users/:userId', clientController.deleteUser);
+
 export default router;

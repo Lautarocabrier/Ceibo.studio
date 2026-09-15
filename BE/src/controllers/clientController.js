@@ -40,4 +40,22 @@ export const clientController = {
       next(error);
     }
   },
+
+  async createUser(req, res, next) {
+    try {
+      const result = await clientService.createUser(req.params.id, req.body);
+      return res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async deleteUser(req, res, next) {
+    try {
+      const result = await clientService.deleteUser(req.params.id, req.params.userId);
+      return res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
 };

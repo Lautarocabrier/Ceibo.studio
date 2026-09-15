@@ -90,14 +90,6 @@ form input:focus { border-color: #c54d2d; }
 .primary-action:hover { background: #a93f25; transform: translateY(-1px); }
 .primary-action span { font-size: 17px; font-weight: 400; line-height: 10px; }
 .menu-trigger { display: none; }
-.dashboard-welcome { align-items: center; background: #303934; border-radius: 16px; color: #f6f2e9; display: flex; justify-content: space-between; margin-top: 29px; max-width: 860px; min-height: 184px; overflow: hidden; padding: 27px 33px; position: relative; }
-.dashboard-welcome::after { border: 1px solid rgba(246, 242, 233, .2); border-radius: 50%; content: ''; height: 245px; position: absolute; right: -70px; top: -72px; transform: rotate(27deg); width: 190px; }
-.welcome-kicker { color: #aeb6ad; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .15em; text-transform: uppercase; }
-.dashboard-welcome h2 { font-size: 28px; font-weight: 500; letter-spacing: -.055em; line-height: 1.02; margin: 13px 0 10px; position: relative; z-index: 1; }
-.dashboard-welcome h2 em { color: #d8754d; }
-.dashboard-welcome p { color: #b8c0b7; font-size: 12px; line-height: 1.5; max-width: 350px; position: relative; z-index: 1; }
-.welcome-mark { align-items: center; background: #c54d2d; border-radius: 50%; display: flex; height: 83px; justify-content: center; margin-right: 36px; position: relative; transform: rotate(15deg); width: 83px; z-index: 1; }
-.welcome-mark .brand-mark { transform: rotate(-25deg) scale(1.25); }
 .business-section { margin-top: 37px; max-width: 860px; }
 .section-heading { align-items: end; display: flex; justify-content: space-between; }
 .section-heading h2 { color: #303934; font-size: 18px; font-weight: 600; letter-spacing: -.04em; margin-top: 5px; }
@@ -130,23 +122,9 @@ form input:focus { border-color: #c54d2d; }
 .business-actions .delete-action:hover { color: #963c2b; }
 .business-actions .deactivate-action { color: #477a54; }
 .business-actions .activate-action { color: #c54d2d; }
-.business-filters { align-items: center; display: flex; gap: 8px; margin-top: 18px; max-width: 620px; }
-.business-filters input, .business-filters select { background: #fffdf8; border: 1px solid #d8d4c9; border-radius: 5px; color: #303934; font-size: 12px; margin: 0; outline: 0; padding: 9px 10px; }
-.business-filters input { flex: 1; min-width: 0; }
-.business-filters select { width: 105px; }
-.business-filters input:focus, .business-filters select:focus { border-color: #c54d2d; }
-.business-filters .secondary-button { padding: 9px 13px; }
 .empty-state { color: #7c827b; font-size: 13px; padding: 35px 0; text-align: center; }
-.detail-list { display: grid; gap: 15px; }
-.detail-list div { border-bottom: 1px solid #dedad0; display: flex; justify-content: space-between; gap: 20px; padding-bottom: 11px; }
-.detail-list span { color: #7c827b; font-size: 11px; }
-.detail-list strong { color: #303934; font-size: 12px; text-align: right; }
-.loading-screen, .customer-shell { align-items: center; background: #f3f0e9; color: #303934; display: flex; flex-direction: column; justify-content: center; min-height: 100vh; }
+.loading-screen { align-items: center; background: #f3f0e9; color: #303934; display: flex; flex-direction: column; justify-content: center; min-height: 100vh; }
 .loading-screen { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
-.customer-shell { align-items: flex-start; gap: 18px; padding: 8vw; }
-.customer-shell h1 { font-size: clamp(38px, 6vw, 70px); margin-top: 20vh; }
-.customer-shell p { color: #69706b; }
-.customer-shell .primary-action { margin-top: 18px; }
 .customer-dashboard .dashboard-header > .status-badge { margin-top: 9px; }
 .customer-section { max-width: 860px; }
 .customer-overview { align-items: center; background: #303934; border-radius: 14px; color: #f6f2e9; display: flex; gap: 17px; margin-top: 20px; max-width: 560px; padding: 22px; }
@@ -237,19 +215,11 @@ form input:focus { border-color: #c54d2d; }
   .dashboard-header p { font-size: 11px; line-height: 1.4; max-width: 220px; }
   .primary-action { font-size: 0; height: 35px; padding: 0; width: 35px; }
   .primary-action span { font-size: 20px; margin: auto; }
-  .dashboard-welcome { margin-top: 25px; min-height: 208px; padding: 25px 24px; }
-  .dashboard-welcome h2 { font-size: 25px; }
-  .dashboard-welcome p { max-width: 225px; }
-  .welcome-mark { height: 58px; margin: 0 -22px 0 12px; width: 58px; }
-  .welcome-mark .brand-mark { transform: rotate(-25deg) scale(.9); }
   .business-section { margin-top: 31px; }
   .business-grid { grid-template-columns: 1fr; margin-top: 14px; max-width: none; }
   .business-actions { gap: 4px; }
   .business-actions button { font-size: 13px; }
   .business-actions button span { font-size: 9px; }
-  .business-filters { align-items: stretch; flex-wrap: wrap; }
-  .business-filters input { flex-basis: 100%; }
-  .business-filters select { flex: 1; }
   .customer-dashboard .dashboard-header > .status-badge { display: none; }
   .customer-details { grid-template-columns: 1fr; }
   .modal { padding: 23px; }

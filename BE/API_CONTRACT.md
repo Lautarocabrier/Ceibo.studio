@@ -178,7 +178,7 @@ Ejemplo: `GET /clients?status=active&search=palermo`
 
 ### 2.2 Crear Nuevo Cliente (`POST /clients` o `POST /api/clients`)
 
-Crea la ficha del nuevo cliente y crea automáticamente su usuario de acceso con la contraseña indicada.
+Crea la ficha del nuevo cliente. Los datos de acceso son opcionales; si se envían, también crea el primer usuario. Los administradores adicionales se crean desde los endpoints de usuarios del cliente.
 
 #### Request Body
 ```json
@@ -188,6 +188,14 @@ Crea la ficha del nuevo cliente y crea automáticamente su usuario de acceso con
   "phone": "+54 11 4321-8765",
   "contactName": "Lucía Giménez",
   "password": "Password123!"
+}
+```
+
+Para crear únicamente el negocio:
+```json
+{
+  "name": "Café de Especialidad San Telmo",
+  "phone": "+54 11 4321-8765"
 }
 ```
 
@@ -277,6 +285,22 @@ Permite suspender o reactivar el acceso de un cliente.
   "status": "inactive"
 }
 ```
+
+### 2.5 Crear administrador (`POST /clients/:id/users`)
+
+Crea un usuario `CUSTOMER` asociado al negocio. Requiere `email` y `password` de al menos 6 caracteres; `name` es opcional.
+
+```json
+{
+  "email": "admin@negocio.com",
+  "password": "Password123!",
+  "name": "Admin del negocio"
+}
+```
+
+### 2.6 Eliminar administrador (`DELETE /clients/:id/users/:userId`)
+
+Elimina un usuario `CUSTOMER` únicamente si pertenece al negocio indicado.
 *(Valores permitidos: `"active"` | `"inactive"`)*
 
 #### Respuesta 200 OK

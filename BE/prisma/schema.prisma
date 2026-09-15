@@ -26,9 +26,9 @@ model User {
 model Client {
   id          String   @id @default(cuid())
   name        String
-  email       String   @unique
-  phone       String
-  contactName String
+  email       String?  @unique
+  phone       String?
+  contactName String?
   status      String   @default("active") // active | inactive
   users       User[]
   createdAt   DateTime @default(now())
