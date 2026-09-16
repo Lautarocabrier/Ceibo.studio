@@ -8,8 +8,12 @@ const __dirname = path.dirname(__filename);
 // Asegurar carga de .env desde la raíz de BE
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
+// SQLite local para desarrollo cuando todavía no existe un .env.
+process.env.DATABASE_URL ||= 'file:./dev.db';
+
 export const config = {
   port: process.env.PORT || 5000,
+  databaseUrl: process.env.DATABASE_URL,
   nodeEnv: process.env.NODE_ENV || 'development',
   jwt: {
     secret: process.env.JWT_SECRET || 'ceibo_superadmin_default_secret_key_2026',
