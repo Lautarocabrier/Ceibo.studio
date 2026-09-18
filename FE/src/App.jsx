@@ -1262,11 +1262,13 @@ function PublicFeedbackView() {
   const [qrData, setQrData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [currentStep, setCurrentStep] = useState(1) // 1: Rating, 2: Employee, 3: Dimensions, 4: Lead
   const [rating, setRating] = useState(5)
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
   const [selectedDimensions, setSelectedDimensions] = useState([])
   const [comment, setComment] = useState('')
   const [customer, setCustomer] = useState({ name: '', email: '', phone: '', marketingOptIn: true })
+  const [searchQuery, setSearchQuery] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submittedResult, setSubmittedResult] = useState(null)
 
@@ -1276,7 +1278,6 @@ function PublicFeedbackView() {
       try {
         const payload = await apiRequest(`/public/qr/${token}`)
         setQrData(payload)
-        // Por defecto, seleccionar el primer colaborador si hay
         if (payload.employees?.length) {
           setSelectedEmployeeId(payload.employees[0].id)
         }
@@ -1362,7 +1363,14 @@ function PublicFeedbackView() {
               </strong>
             </div>
           )}
-          <button className="primary-action" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setSubmittedResult(null)}>
+          <button
+            className="primary-action"
+            style={{ width: '100%', justifyContent: 'center' }}
+            onClick={() => {
+              setSubmittedResult(null)
+              setCurrentStep(1)
+            }}
+          >
             Enviar otra opinión
           </button>
         </div>
@@ -1370,124 +1378,306 @@ function PublicFeedbackView() {
     )
   }
 
+  const filteredEmployees = (qrData?.employees || []).filter((emp) => {
+    if (!searchQuery.trim()) return true
+    const q = searchQuery.toLowerCase()
+    return emp.name.toLowerCase().includes(q) || (emp.position && emp.position.toLowerCase().includes(q))
+  })
+
   return (
     <div className="feedback-shell">
       <div className="feedback-card">
+        {/* Cabecera común de marca */}
         <div className="feedback-header">
           <Brand />
           <span className="eyebrow" style={{ marginTop: 12, display: 'block' }}>
             {qrData.organization?.name} · {qrData.location?.name}
           </span>
-          <h1>¿Cómo fue tu experiencia?</h1>
-          <p>{qrData.qr?.label || 'Mesa'} · Tu opinión premia a quienes te atienden</p>
+        </div>
+
+        {/* Indicador de pasos */}
+        <div className="phase-stepper-wrap">
+          <div className="phase-stepper">
+            {[1, 2, 3, 4].map((step) => (
+              <div
+                key={step}
+                className={`phase-step-pill ${
+                  currentStep === step ? 'is-active' : currentStep > step ? 'is-completed' : ''
+                }`}
+              />
+            ))}
+          </div>
+          <span className="phase-step-label">
+            Paso {currentStep} de 4 ·{' '}
+            {currentStep === 1
+              ? 'Experiencia'
+              : currentStep === 2
+              ? 'Atención'
+              : currentStep === 3
+              ? 'Destacados'
+              : 'Beneficios'}
+          </span>
         </div>
 
         {error && <p className="form-error" style={{ textAlign: 'center' }}>{error}</p>}
 
         <form onSubmit={handleSubmit}>
-          {/* Estrellas */}
-          <div className="stars-selector">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                type="button"
-                key={star}
-                className={`star-btn ${star <= rating ? 'is-active' : ''}`}
-                onClick={() => setRating(star)}
-              >
-                ★
-              </button>
-            ))}
-          </div>
-          <p style={{ textAlign: 'center', fontSize: 12, color: '#c54d2d', fontWeight: 600, margin: '-10px 0 20px' }}>
-            {rating === 5 ? '¡Excelente servicio!' : rating === 4 ? 'Muy buena atención' : rating === 3 ? 'Regular' : 'A mejorar'}
-          </p>
+          {/* FASE 1: CALIFICACIÓN POR ESTRELLAS */}
+          {currentStep === 1 && (
+            <div>
+              <div className="feedback-header" style={{ marginBottom: 12 }}>
+                <h1>¿Cómo fue tu experiencia?</h1>
+                <p>{qrData.qr?.label || 'Mesa'} · Tu opinión premia a quienes te atienden</p>
+              </div>
 
-          {/* Selector de colaborador */}
-          <label style={{ marginBottom: 8 }}>¿Quién te atendió?</label>
-          <div className="collaborator-chips">
-            {qrData.employees?.map((emp) => (
-              <button
-                type="button"
-                key={emp.id}
-                className={`collab-chip ${selectedEmployeeId === emp.id ? 'is-selected' : ''}`}
-                onClick={() => setSelectedEmployeeId(emp.id)}
-              >
-                👤 {emp.name} ({emp.position})
-              </button>
-            ))}
-            <button
-              type="button"
-              className={`collab-chip ${selectedEmployeeId === '' ? 'is-selected' : ''}`}
-              onClick={() => setSelectedEmployeeId('')}
-            >
-              No recuerdo / Todo el equipo
-            </button>
-          </div>
-
-          {/* Dimensiones */}
-          {qrData.dimensions?.length > 0 && (
-            <>
-              <label style={{ marginBottom: 8 }}>¿Qué destacarías?</label>
-              <div className="dimensions-chips">
-                {qrData.dimensions.map((dim) => (
+              <div className="stars-selector">
+                {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     type="button"
-                    key={dim.id}
-                    className={`dim-chip ${selectedDimensions.includes(dim.id) ? 'is-selected' : ''}`}
-                    onClick={() => toggleDimension(dim.id)}
+                    key={star}
+                    className={`star-btn ${star <= rating ? 'is-active' : ''}`}
+                    onClick={() => setRating(star)}
+                    aria-label={`${star} estrellas`}
                   >
-                    ✦ {dim.name}
+                    ★
                   </button>
                 ))}
               </div>
-            </>
+
+              <p className="rating-caption">
+                {rating === 5
+                  ? '¡Excelente servicio!'
+                  : rating === 4
+                  ? 'Muy buena atención'
+                  : rating === 3
+                  ? 'Servicio regular'
+                  : rating === 2
+                  ? 'Podría mejorar'
+                  : 'Mala experiencia'}
+              </p>
+
+              <button
+                type="button"
+                className="submit-button"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => setCurrentStep(2)}
+              >
+                Continuar <span>→</span>
+              </button>
+            </div>
           )}
 
-          {/* Comentario */}
-          <label htmlFor="feedback-comment">Comentario o felicitación</label>
-          <textarea
-            id="feedback-comment"
-            className="feedback-textarea"
-            placeholder="Escribí unas palabras para tu camarero o el local..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
+          {/* FASE 2: QUIÉN TE ATENDIÓ */}
+          {currentStep === 2 && (
+            <div>
+              <div className="feedback-header" style={{ marginBottom: 14 }}>
+                <h1>¿Quién te atendió?</h1>
+                <p>Elegí al colaborador de tu mesa para reconocer su labor</p>
+              </div>
 
-          {/* Club de beneficios (Lead Capture) */}
-          <div className="lead-box">
-            <h4>Club de Comensales · Beneficios</h4>
-            <p>Dejá tu contacto para recibir promociones y regalos en tu próxima visita.</p>
-            <input
-              type="text"
-              placeholder="Tu nombre (opcional)"
-              value={customer.name}
-              onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-            />
-            <input
-              type="email"
-              placeholder="Tu email (opcional)"
-              value={customer.email}
-              onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-            />
-            <input
-              type="tel"
-              placeholder="Tu teléfono (opcional)"
-              value={customer.phone}
-              onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
-            />
-            <label className="optin">
-              <input
-                type="checkbox"
-                checked={customer.marketingOptIn}
-                onChange={(e) => setCustomer({ ...customer, marketingOptIn: e.target.checked })}
+              {/* Buscador reactivo si hay más de 3 empleados */}
+              {qrData.employees?.length > 3 && (
+                <div className="collab-search-wrap">
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre o puesto..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="collab-search-input"
+                  />
+                </div>
+              )}
+
+              {/* Lista vertical con deslizador */}
+              <div className="collab-vertical-list">
+                {/* Opción atención general */}
+                <button
+                  type="button"
+                  className={`collab-card-row ${selectedEmployeeId === '' ? 'is-selected' : ''}`}
+                  onClick={() => setSelectedEmployeeId('')}
+                >
+                  <div className="collab-avatar-fallback" style={{ background: '#e4f0e6', color: '#3f7650' }}>
+                    👥
+                  </div>
+                  <div className="collab-info">
+                    <strong>Atención general</strong>
+                    <small>Todo el equipo / No recuerdo la persona</small>
+                  </div>
+                  <div className="collab-radio">
+                    <div className="collab-radio-dot" />
+                  </div>
+                </button>
+
+                {filteredEmployees.map((emp) => (
+                  <button
+                    type="button"
+                    key={emp.id}
+                    className={`collab-card-row ${selectedEmployeeId === emp.id ? 'is-selected' : ''}`}
+                    onClick={() => setSelectedEmployeeId(emp.id)}
+                  >
+                    {emp.avatarUrl ? (
+                      <>
+                        <img
+                          src={emp.avatarUrl}
+                          alt={emp.name}
+                          className="collab-avatar"
+                          onError={(e) => {
+                            e.target.style.display = 'none'
+                            if (e.target.nextElementSibling) {
+                              e.target.nextElementSibling.style.display = 'flex'
+                            }
+                          }}
+                        />
+                        <div className="collab-avatar-fallback" style={{ display: 'none' }}>
+                          {emp.name.charAt(0).toUpperCase()}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="collab-avatar-fallback">
+                        {emp.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="collab-info">
+                      <strong>{emp.name}</strong>
+                      <small>{emp.position || 'Colaborador'}</small>
+                    </div>
+                    <div className="collab-radio">
+                      <div className="collab-radio-dot" />
+                    </div>
+                  </button>
+                ))}
+
+                {filteredEmployees.length === 0 && (
+                  <p style={{ textAlign: 'center', color: '#79807a', fontSize: 12, padding: 12 }}>
+                    No se encontraron colaboradores con esa búsqueda.
+                  </p>
+                )}
+              </div>
+
+              <div className="step-actions">
+                <button
+                  type="button"
+                  className="ghost-back-btn"
+                  onClick={() => setCurrentStep(1)}
+                >
+                  ← Volver
+                </button>
+                <button
+                  type="button"
+                  className="submit-button"
+                  onClick={() => setCurrentStep(3)}
+                >
+                  Siguiente <span>→</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* FASE 3: DESTACADOS Y COMENTARIO */}
+          {currentStep === 3 && (
+            <div>
+              <div className="feedback-header" style={{ marginBottom: 14 }}>
+                <h1>¿Qué destacarías?</h1>
+                <p>Elegí los aspectos que marcaron la diferencia</p>
+              </div>
+
+              {qrData.dimensions?.length > 0 && (
+                <div className="dimensions-chips">
+                  {qrData.dimensions.map((dim) => (
+                    <button
+                      type="button"
+                      key={dim.id}
+                      className={`dim-chip ${selectedDimensions.includes(dim.id) ? 'is-selected' : ''}`}
+                      onClick={() => toggleDimension(dim.id)}
+                    >
+                      ✦ {dim.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <label htmlFor="feedback-comment" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: '#48504b' }}>
+                Comentario o felicitación
+              </label>
+              <textarea
+                id="feedback-comment"
+                className="feedback-textarea"
+                placeholder="Escribí unas palabras para tu camarero o el local..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
               />
-              Acepto recibir novedades y beneficios de {qrData.organization?.name}
-            </label>
-          </div>
 
-          <button type="submit" className="submit-button" disabled={isSubmitting}>
-            {isSubmitting ? 'Enviando...' : 'Enviar calificación'} <span aria-hidden="true">→</span>
-          </button>
+              <div className="step-actions">
+                <button
+                  type="button"
+                  className="ghost-back-btn"
+                  onClick={() => setCurrentStep(2)}
+                >
+                  ← Volver
+                </button>
+                <button
+                  type="button"
+                  className="submit-button"
+                  onClick={() => setCurrentStep(4)}
+                >
+                  Siguiente <span>→</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* FASE 4: CLUB DE COMENSALES Y ENVÍO */}
+          {currentStep === 4 && (
+            <div>
+              <div className="lead-box">
+                <h4>Club de Comensales · Beneficios</h4>
+                <p>Dejá tu contacto para recibir promociones y regalos en tu próxima visita.</p>
+                <input
+                  type="text"
+                  placeholder="Tu nombre (opcional)"
+                  value={customer.name}
+                  onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                />
+                <input
+                  type="email"
+                  placeholder="Tu email (opcional)"
+                  value={customer.email}
+                  onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+                />
+                <input
+                  type="tel"
+                  placeholder="Tu teléfono (opcional)"
+                  value={customer.phone}
+                  onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+                />
+                <label className="optin">
+                  <input
+                    type="checkbox"
+                    checked={customer.marketingOptIn}
+                    onChange={(e) => setCustomer({ ...customer, marketingOptIn: e.target.checked })}
+                  />
+                  Acepto recibir novedades y beneficios de {qrData.organization?.name}
+                </label>
+              </div>
+
+              <div className="step-actions">
+                <button
+                  type="button"
+                  className="ghost-back-btn"
+                  onClick={() => setCurrentStep(3)}
+                >
+                  ← Volver
+                </button>
+                <button
+                  type="submit"
+                  className="submit-button"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Enviando...' : 'ENVIAR CALIFICACIÓN'} <span>→</span>
+                </button>
+              </div>
+            </div>
+          )}
         </form>
       </div>
     </div>

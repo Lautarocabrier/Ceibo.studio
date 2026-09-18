@@ -375,28 +375,73 @@ form input:focus { border-color: #c54d2d; }
 .recognition-row strong { color: #c54d2d; font-size: 12px; }
 .recognition-row small { color: #7c827b; font-size: 11px; }
 
-/* Flujo público de Feedback comensal */
+/* Flujo público de Feedback comensal en Fases */
 .feedback-shell { min-height: 100vh; background: #f3f0e9; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; }
-.feedback-card { background: #fffdf8; border: 1px solid #ddd9cf; border-radius: 20px; box-shadow: 0 16px 40px rgba(48, 57, 52, .12); max-width: 460px; width: 100%; padding: 32px 28px; }
-.feedback-header { text-align: center; margin-bottom: 24px; }
-.feedback-header h1 { font-size: 26px; font-weight: 700; color: #303934; margin: 8px 0 4px; letter-spacing: -.03em; }
-.feedback-header p { font-size: 13px; color: #69706b; }
-.stars-selector { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
-.star-btn { background: transparent; border: 0; font-size: 38px; color: #ddd9cf; cursor: pointer; transition: transform .15s, color .15s; padding: 0 4px; line-height: 1; }
-.star-btn.is-active { color: #c54d2d; transform: scale(1.1); }
-.collaborator-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
-.collab-chip { background: #f7f4ed; border: 1px solid #ddd9cf; border-radius: 20px; padding: 8px 14px; font-size: 12px; color: #303934; cursor: pointer; transition: all .2s; }
-.collab-chip.is-selected { background: #303934; color: #f6f2e9; border-color: #303934; }
-.dimensions-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-.dim-chip { background: #f7f4ed; border: 1px solid #ddd9cf; border-radius: 8px; padding: 6px 12px; font-size: 11px; color: #59615b; cursor: pointer; }
+.feedback-card { background: #fffdf8; border: 1px solid #ddd9cf; border-radius: 20px; box-shadow: 0 16px 40px rgba(48, 57, 52, .12); max-width: 460px; width: 100%; padding: 32px 28px; transition: all .25s ease; position: relative; }
+.feedback-header { text-align: center; margin-bottom: 18px; }
+.feedback-header h1 { font-size: 24px; font-weight: 700; color: #303934; margin: 8px 0 4px; letter-spacing: -.03em; }
+.feedback-header p { font-size: 13px; color: #69706b; margin: 0; }
+
+/* Barra de progreso de fases */
+.phase-stepper-wrap { margin-bottom: 18px; }
+.phase-stepper { display: flex; gap: 6px; justify-content: center; margin-bottom: 6px; }
+.phase-step-pill { height: 4px; flex: 1; max-width: 65px; border-radius: 4px; background: #e6e2d8; transition: background .3s ease; }
+.phase-step-pill.is-active { background: #c54d2d; }
+.phase-step-pill.is-completed { background: #3f7650; }
+.phase-step-label { font-size: 10px; font-family: 'DM Mono', monospace; text-transform: uppercase; color: #88908a; text-align: center; letter-spacing: .08em; display: block; }
+
+/* Estrellas fase 1 */
+.stars-selector { display: flex; justify-content: center; gap: 10px; margin: 24px 0 14px; }
+.star-btn { background: transparent; border: 0; font-size: 42px; color: #ddd9cf; cursor: pointer; transition: transform .15s, color .15s; padding: 0 4px; line-height: 1; }
+.star-btn:hover { transform: scale(1.15); color: #e47c61; }
+.star-btn.is-active { color: #c54d2d; transform: scale(1.08); }
+.rating-caption { text-align: center; font-size: 13px; color: #c54d2d; font-weight: 600; min-height: 20px; margin-bottom: 22px; }
+
+/* Deslizador vertical de colaboradores fase 2 */
+.collab-search-wrap { margin-bottom: 12px; }
+.collab-search-input { width: 100%; background: #fff; border: 1px solid #ddd9cf; border-radius: 8px; padding: 9px 12px; font-size: 12px; outline: none; transition: border-color .2s; box-sizing: border-box; }
+.collab-search-input:focus { border-color: #c54d2d; }
+.collab-vertical-list { display: flex; flex-direction: column; gap: 8px; max-height: 290px; overflow-y: auto; padding-right: 4px; margin-bottom: 14px; }
+.collab-vertical-list::-webkit-scrollbar { width: 5px; }
+.collab-vertical-list::-webkit-scrollbar-track { background: #f4efe6; border-radius: 6px; }
+.collab-vertical-list::-webkit-scrollbar-thumb { background: #d7d1c5; border-radius: 6px; }
+
+.collab-card-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #fffdf9; border: 1.5px solid #ebe5d9; border-radius: 12px; cursor: pointer; transition: all .2s ease; text-align: left; width: 100%; box-sizing: border-box; }
+.collab-card-row:hover { border-color: #c54d2d; background: #fff8f5; }
+.collab-card-row.is-selected { border-color: #c54d2d; background: #fdf3ef; box-shadow: 0 2px 8px rgba(197, 77, 45, .1); }
+
+.collab-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid #e7dfd4; }
+.collab-avatar-fallback { width: 44px; height: 44px; border-radius: 50%; background: #eedfd9; color: #c54d2d; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid #e7dfd4; }
+.collab-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.collab-info strong { font-size: 13px; color: #303934; }
+.collab-info small { font-size: 11px; color: #79807a; }
+.collab-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #cfc9bd; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .2s; }
+.collab-card-row.is-selected .collab-radio { border-color: #c54d2d; background: #c54d2d; }
+.collab-radio-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; opacity: 0; }
+.collab-card-row.is-selected .collab-radio-dot { opacity: 1; }
+
+/* Botones de navegación en pasos */
+.step-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
+.step-actions .submit-button { flex: 1; margin: 0; }
+.ghost-back-btn { background: transparent; border: 1px solid #dcd7cb; border-radius: 10px; padding: 11px 16px; font-size: 12px; font-weight: 600; color: #555e58; cursor: pointer; transition: all .2s; }
+.ghost-back-btn:hover { background: #eee8dc; color: #2b332f; }
+
+/* Dimensiones y comentarios fase 3 */
+.dimensions-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 18px; }
+.dim-chip { background: #f7f4ed; border: 1px solid #ddd9cf; border-radius: 8px; padding: 8px 14px; font-size: 12px; color: #59615b; cursor: pointer; transition: all .15s; }
+.dim-chip:hover { border-color: #c54d2d; }
 .dim-chip.is-selected { background: #f5e2d9; border-color: #c54d2d; color: #c54d2d; font-weight: 600; }
-.feedback-textarea { width: 100%; border: 1px solid #ddd9cf; border-radius: 10px; padding: 12px; font-family: inherit; font-size: 13px; min-height: 80px; margin-bottom: 18px; outline: none; background: #fff; resize: vertical; }
+.feedback-textarea { width: 100%; border: 1px solid #ddd9cf; border-radius: 10px; padding: 12px; font-family: inherit; font-size: 13px; min-height: 85px; margin-top: 6px; margin-bottom: 8px; outline: none; background: #fff; resize: vertical; box-sizing: border-box; }
 .feedback-textarea:focus { border-color: #c54d2d; }
-.lead-box { background: #f7f4ed; border: 1px dashed #d7d3c9; border-radius: 12px; padding: 16px; margin-bottom: 22px; }
-.lead-box h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #c54d2d; }
-.lead-box p { font-size: 11px; color: #69706b; margin-bottom: 12px; }
-.lead-box input { background: #fff; border: 1px solid #ddd9cf; border-radius: 6px; padding: 8px 10px; font-size: 12px; width: 100%; margin-bottom: 8px; }
+
+/* Club de comensales fase 4 */
+.lead-box { background: #f7f4ed; border: 1px dashed #d7d3c9; border-radius: 14px; padding: 18px 16px; margin-bottom: 6px; }
+.lead-box h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #c54d2d; font-family: 'DM Mono', monospace; }
+.lead-box p { font-size: 12px; color: #69706b; margin-bottom: 14px; }
+.lead-box input { background: #fff; border: 1px solid #ddd9cf; border-radius: 8px; padding: 9px 12px; font-size: 12px; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
 .lead-box label.optin { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #48504b; cursor: pointer; text-transform: none; margin-top: 4px; }
+
+/* Éxito */
 .feedback-success-card { text-align: center; padding: 30px 20px; }
 .feedback-success-card span.success-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #e4f0e6; color: #3f7650; font-size: 28px; margin-bottom: 16px; }
 
