@@ -16,7 +16,7 @@ export const authService = {
     const user = await prisma.user.findUnique({
       where: { email: userEmail },
       include: {
-        client: {
+        organization: {
           select: {
             id: true,
             name: true,
@@ -40,7 +40,7 @@ export const authService = {
     }
 
     // Si es un cliente, verificar si la cuenta de cliente está activa
-    if (user.role === 'CUSTOMER' && user.client && user.client.status !== 'active') {
+    if (user.role === 'CUSTOMER' && user.organization && user.organization.status !== 'active') {
       const error = new Error('La cuenta de cliente se encuentra inactiva o suspendida');
       error.statusCode = 403;
       throw error;
@@ -58,7 +58,8 @@ export const authService = {
       email: user.email,
       name: user.name,
       role: user.role,
-      clientId: user.clientId,
+      organizationId: user.organizationId,
+      clientId: user.organizationId,
     };
 
     const token = jwt.sign(payload, config.jwt.secret, {
@@ -73,8 +74,9 @@ export const authService = {
         email: user.email,
         name: user.name,
         role: user.role,
-        clientId: user.clientId,
-        clientName: user.client?.name || null,
+        organizationId: user.organizationId,
+        clientId: user.organizationId,
+        clientName: user.organization?.name || null,
       },
       redirectTo,
     };
@@ -88,8 +90,8 @@ export const authService = {
         email: true,
         name: true,
         role: true,
-        clientId: true,
-        client: {
+        organizationId: true,
+        organization: {
           select: {
             id: true,
             name: true,
@@ -111,7 +113,16 @@ export const authService = {
 
     return {
       success: true,
-      user,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        organizationId: user.organizationId,
+        clientId: user.organizationId,
+        client: user.organization,
+        createdAt: user.createdAt,
+      },
       redirectTo,
     };
   },

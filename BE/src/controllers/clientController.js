@@ -58,4 +58,22 @@ export const clientController = {
       next(error);
     }
   },
+
+  async update(req, res, next) {
+    try {
+      const result = await clientService.updateClient(req.params.id, req.body);
+      return res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async delete(req, res, next) {
+    try {
+      const result = await clientService.deleteClient(req.params.id);
+      return res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
 };

@@ -45,7 +45,7 @@ export const authenticate = async (req, res, next) => {
         email: true,
         name: true,
         role: true,
-        clientId: true,
+        organizationId: true,
       },
     });
 
@@ -56,7 +56,10 @@ export const authenticate = async (req, res, next) => {
       });
     }
 
-    req.user = user;
+    req.user = {
+      ...user,
+      clientId: user.organizationId,
+    };
     next();
   } catch (error) {
     next(error);
