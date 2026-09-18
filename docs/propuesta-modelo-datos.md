@@ -8,12 +8,13 @@ Esta propuesta se basa en:
 - El esquema actual de Prisma en `BE/prisma/schema.prisma`.
 - El contrato de API definido en `BE/API_CONTRACT.md`.
 - El documento de producto `PRD — Plataforma de Activación del Talento V0.1.md`.
+- Las decisiones de arquitectura sobre prevención de auto-reconocimiento (anti-fraude) y captación de clientes (CRM/Leads).
 
-La rama actual implementa principalmente autenticación, Super Admin, clientes y usuarios administradores. El PRD requiere además sucursales, empleados, feedback, eventos de desempeño, reconocimientos, puntos, reglas, recompensas y códigos QR.
+La rama actual implementa principalmente autenticación básica, Super Admin, clientes y usuarios administradores. El PRD y el modelo de negocio requieren además sucursales, empleados, clientes finales (CRM), feedback verificado, eventos de desempeño, reconocimientos, puntos, reglas, recompensas y códigos QR.
 
-## 1. Modelo actual
+## 1. Modelo actual vs. Modelo propuesto
 
-Actualmente Prisma define únicamente dos entidades:
+Actualmente Prisma define únicamente dos entidades en SQLite:
 
 ```text
 User
@@ -39,9 +40,15 @@ Relación actual:
 Client 1 ──────── N User
 ```
 
-El frontend ya anticipa conceptos que todavía no están persistidos en base de datos, como empleados, dashboard, evidencia, reconocimientos, QR, performance score y administradores por negocio.
+### Limitaciones del modelo actual:
+1. **Confusión de roles**: El rol `CUSTOMER` hoy representa al dueño o administrador del negocio, no al cliente final que consume en el local.
+2. **Sin multi-sucursal**: La sucursal (`location`) es tratada como un simple texto plano en el frontend.
+3. **Sin trazabilidad operativa**: No existen empleados, feedback, métricas de desempeño, ledger de puntos ni catálogo de premios.
+4. **Vulnerable a fraude**: No contempla mecanismos para evitar que un empleado se auto-asigne reconocimientos desde su propio teléfono.
 
-## 2. Diagrama entidad-relación sugerido
+---
+
+## 2. Diagrama entidad-relación propuesto
 
 ```mermaid
 erDiagram
@@ -49,8 +56,12 @@ erDiagram
     USER ||--o{ ORGANIZATION_MEMBER : belongs_to
 
     ORGANIZATION ||--o{ LOCATION : has
+    LOCATION ||--o{ ORGANIZATION_MEMBER : scopes_manager
     LOCATION ||--o{ EMPLOYEE : employs
     USER o|--o| EMPLOYEE : may_login_as
+
+    ORGANIZATION ||--o{ CUSTOMER : acquires
+    CUSTOMER o|--o{ FEEDBACK : leaves
 
     LOCATION ||--o{ QR_CODE : exposes
     QR_CODE ||--o{ FEEDBACK : receives
@@ -66,13 +77,13 @@ erDiagram
     FEEDBACK ||--o{ PERFORMANCE_EVENT : generates
     ORGANIZATION ||--o{ PERFORMANCE_EVENT : owns
     LOCATION ||--o{ PERFORMANCE_EVENT : occurs_at
-    EMPLOYEE o|--o{ PERFORMANCE_EVENT : concerns
+    EMPLOYEE o|--o{ PERFORMANCE_EVENT : concerns_optional
     DIMENSION o|--o{ PERFORMANCE_EVENT : evaluates
 
     EMPLOYEE ||--o{ RECOGNITION : receives
-    USER o|--o{ RECOGNITION : creates
+    USER o|--o{ RECOGNITION : creates_manual
     PERFORMANCE_EVENT o|--o{ RECOGNITION : supports
-    RULE o|--o{ RECOGNITION : triggers
+    RULE o|--o{ RECOGNITION : triggers_auto
 
     EMPLOYEE ||--o{ POINT_LEDGER_ENTRY : accumulates
     PERFORMANCE_EVENT o|--o{ POINT_LEDGER_ENTRY : originates
@@ -85,11 +96,9 @@ erDiagram
     ORGANIZATION ||--o{ REWARD : defines
     EMPLOYEE ||--o{ REWARD_ASSIGNMENT : receives
     REWARD ||--o{ REWARD_ASSIGNMENT : assigned_as
-    RULE o|--o{ REWARD : creates
-    REWARD_ASSIGNMENT o|--o{ POINT_LEDGER_ENTRY : may_generate
+    REWARD_ASSIGNMENT o|--o{ POINT_LEDGER_ENTRY : redeems
 
     ORGANIZATION ||--o{ BUDGET : configures
-    ORGANIZATION ||--o{ BUDGET_MOVEMENT : tracks
     REWARD_ASSIGNMENT o|--o{ BUDGET_MOVEMENT : reserves
 
     USER {
@@ -107,7 +116,8 @@ erDiagram
         string email
         string phone
         string contact_name
-        string status
+        string status "active | inactive"
+        decimal monthly_reward_budget
         datetime created_at
         datetime updated_at
     }
@@ -116,8 +126,9 @@ erDiagram
         string id PK
         string organization_id FK
         string user_id FK
-        string role
-        string status
+        string location_id FK_nullable
+        string role "SUPERADMIN | OWNER | MANAGER | EMPLOYEE"
+        string status "active | inactive"
         datetime created_at
     }
 
@@ -127,20 +138,31 @@ erDiagram
         string name
         string address
         string phone
-        string status
+        string status "active | inactive"
         datetime created_at
     }
 
     EMPLOYEE {
         string id PK
         string location_id FK
-        string user_id FK
+        string user_id FK_nullable
         string name
         string email
         string phone
         string position
         string avatar_url
-        string status
+        string status "active | inactive"
+        datetime created_at
+        datetime updated_at
+    }
+
+    CUSTOMER {
+        string id PK
+        string organization_id FK
+        string email UK_per_org
+        string phone
+        string name
+        boolean marketing_opt_in
         datetime created_at
         datetime updated_at
     }
@@ -149,8 +171,9 @@ erDiagram
         string id PK
         string location_id FK
         string token UK
-        string type
-        string status
+        string label "e.g. Mesa 4, Barra, General"
+        string type "table | counter | takeout"
+        string status "active | inactive"
         datetime created_at
     }
 
@@ -158,19 +181,25 @@ erDiagram
         string id PK
         string organization_id FK
         string location_id FK
-        string employee_id FK
-        string qr_code_id FK
+        string employee_id FK_nullable
+        string qr_code_id FK_nullable
+        string customer_id FK_nullable
         int rating
         string comment
-        string source
+        string source "qr | link"
+        string client_fingerprint
+        string ip_hash
+        string verification_level "verified | anonymous"
+        string status "approved | flagged | rejected"
         datetime created_at
     }
 
     DIMENSION {
         string id PK
         string organization_id FK
-        string name
+        string name "Amabilidad, Rapidez, Resolucion"
         string description
+        string icon
         boolean active
         datetime created_at
     }
@@ -178,18 +207,18 @@ erDiagram
     FEEDBACK_DIMENSION {
         string feedback_id PK, FK
         string dimension_id PK, FK
-        int score
+        boolean highlighted
     }
 
     PERFORMANCE_EVENT {
         string id PK
         string organization_id FK
         string location_id FK
-        string employee_id FK
-        string feedback_id FK
-        string dimension_id FK
-        string source
-        string type
+        string employee_id FK_nullable
+        string feedback_id FK_nullable
+        string dimension_id FK_nullable
+        string source "customer | manager | peer | system"
+        string type "recognition | rating | alert"
         int score
         decimal value
         string evidence
@@ -201,12 +230,12 @@ erDiagram
         string id PK
         string organization_id FK
         string employee_id FK
-        string performance_event_id FK
-        string created_by_user_id FK
-        string rule_id FK
+        string performance_event_id FK_nullable
+        string created_by_user_id FK_nullable
+        string rule_id FK_nullable
         string category
         string message
-        string source
+        string source "automatic | manager"
         datetime created_at
     }
 
@@ -214,32 +243,35 @@ erDiagram
         string id PK
         string organization_id FK
         string name
-        string trigger
-        json conditions
-        json actions
-        boolean active
+        string event_type "feedback_received"
+        int min_rating
+        int points_to_award
+        string recognition_title
+        boolean is_active
+        json conditions_config
         datetime created_at
     }
 
     POINT_LEDGER_ENTRY {
         string id PK
         string employee_id FK
-        string performance_event_id FK
-        string recognition_id FK
-        string rule_id FK
-        int amount
+        string performance_event_id FK_nullable
+        string recognition_id FK_nullable
+        string reward_assignment_id FK_nullable
+        string rule_id FK_nullable
+        int amount "+10, -50"
         string reason
+        string status "pending | confirmed | cancelled"
         datetime created_at
     }
 
     REWARD {
         string id PK
         string organization_id FK
-        string rule_id FK
-        string type
         string title
         string description
-        decimal amount
+        int points_required
+        decimal monetary_value
         boolean active
         datetime created_at
     }
@@ -248,8 +280,7 @@ erDiagram
         string id PK
         string reward_id FK
         string employee_id FK
-        string status
-        decimal amount
+        string status "pending | approved | delivered | cancelled"
         datetime awarded_at
         datetime delivered_at
         datetime cancelled_at
@@ -268,357 +299,196 @@ erDiagram
     BUDGET_MOVEMENT {
         string id PK
         string organization_id FK
-        string reward_assignment_id FK
-        string type
+        string reward_assignment_id FK_nullable
+        string type "credit | debit | reserve"
         decimal amount
         string description
         datetime created_at
     }
 ```
 
-## 3. Entidades y responsabilidades
+---
 
-### Organization
+## 3. Entidades y responsabilidades detalladas
 
-Es la evolución conceptual de `Client`. Representa al negocio, funciona como raíz del multi-tenancy y contiene sucursales, dimensiones, reglas, recompensas y usuarios.
+### 3.1 Organization (Tenancy raíz)
+Evolución conceptual del actual modelo `Client`. Representa la empresa o negocio (ej. una cafetería o cadena gastronómica).
+- Es el límite de multi-tenancy.
+- Posee sucursales (`Location`), colaboradores (`Employee`), clientes captados (`Customer`), reglas, dimensiones y catálogo de premios.
 
-Durante una migración gradual se puede conservar el nombre `Client` en la base y en las rutas actuales (`/api/clients`), pero el dominio futuro debería utilizar `Organization`.
+### 3.2 User y OrganizationMember (Autenticación y Autorización)
+- **`User`**: Representa la credencial global de inicio de sesión (email, hash de password, nombre).
+- **`OrganizationMember`**: Resuelve la pertenencia a una organización y su alcance:
+  - **`SUPERADMIN`**: Gestión global de la plataforma Ceibo.
+  - **`OWNER`**: Dueño del negocio (`location_id = null`, acceso irrestricto a toda la organización).
+  - **`MANAGER`**: Encargado/Gerente de sucursal. Se le asigna un `location_id` para acotar su visibilidad y permisos a esa sucursal específica.
+  - **`EMPLOYEE`**: Colaborador con acceso a su portal personal.
 
-### User
+### 3.3 Employee (El talento)
+Representa al colaborador operativo (mozo, barista, cocinero) cuyo desempeño se mide:
+- Pertenece a una `Location`.
+- `user_id` es **opcional (nullable)**: En el día 1, la mayoría de los empleados no necesitan cuenta ni login; sólo figuran en la lista de colaboradores para recibir feedback. Pueden vincularse a un `User` si deciden ingresar a ver su perfil y reconocimientos.
+- **Importante**: No se almacenan puntos ni scores calculados directamente en `Employee` como campos mutables primarios; todo se deriva del historial de eventos y ledger.
 
-Representa una cuenta autenticable. Los roles sugeridos son:
+### 3.4 Customer (CRM & Leads de la Organización)
+Representa al cliente comensal que deja feedback:
+- Se vincula a la `Organization`.
+- Se captura en el último paso del flujo mediante un incentivo opcional (*"Dejanos tu email o WhatsApp para participar del sorteo mensual o recibir un beneficio"*).
+- Alimenta la base de datos de marketing del restaurante (`marketing_opt_in`).
+- Sirve como pilar de validación para **Feedback Verificado**.
 
-```text
-SUPERADMIN
-OWNER
-MANAGER
-EMPLOYEE
-```
+### 3.5 QRCode (Punto de acceso físico)
+Expone un token público no predecible (UUID/CUID) que resuelve la sucursal y opcionalmente la mesa o sector:
+- `label`: Identificador humano (ej. "Mesa 12", "Caja principal", "Barra").
+- Resuelve: `Token público → Location → Organization`.
 
-El rol actual `CUSTOMER` parece representar al administrador del negocio, no al cliente final que deja feedback. El cliente final no necesita una cuenta en el MVP.
+### 3.6 Feedback (La interacción del comensal)
+Almacena la opinión del cliente antes de su procesamiento:
+- `rating`: 1 a 5 estrellas.
+- `employee_id`: **Nullable** (el cliente puede seleccionar "No recuerdo" o evaluar al local en general).
+- `customer_id`: **Nullable** (si el cliente dejó sus datos de contacto).
+- **Campos de seguridad anti-abuso**:
+  - `client_fingerprint`: Hash anónimo del dispositivo / navegador.
+  - `ip_hash`: Hash SHA-256 de la IP con salt para rate limiting y privacidad.
+  - `verification_level`: `verified` (con datos de contacto) o `anonymous`.
+  - `status`: `approved`, `flagged` (bajo sospecha de ráfaga o auto-reconocimiento) o `rejected`.
 
-### OrganizationMember
+### 3.7 Dimension y FeedbackDimension
+- **`Dimension`**: Atributos valorados por el negocio (ej. "Amabilidad", "Rapidez", "Resolución").
+- **`FeedbackDimension`**: Tabla intermedia. En el PRD las dimensiones son tags/chips seleccionables (*"¿Qué destacó?"*). `highlighted: true` indica que esa dimensión fue tildada en el feedback.
 
-Relaciona usuarios con organizaciones y permite definir roles y estados por organización. Es preferible a depender únicamente de `User.clientId`, porque permite futuras membresías múltiples y autorización más flexible.
+### 3.8 PerformanceEvent (El núcleo del producto)
+La unidad atómica de evidencia de talento:
+- Desacopla el origen de los datos del cálculo de métricas.
+- Si `employee_id` está presente: Genera un evento de talento individual.
+- Si `employee_id` es `null`: Genera un evento de calidad a nivel `Location` (desempeño general de la sucursal).
+- Preparado para recibir fuentes futuras: `customer`, `manager` (reconocimiento manual), `peer` o `system`.
 
-### Location
+### 3.9 Recognition
+Representa el reconocimiento visible en el dashboard:
+- Puede originarse de una `Rule` automática (ej. rating = 5 con comentario) o ser otorgado manualmente por un `Manager`/`Owner`.
 
-Representa una sucursal. La relación recomendada es:
+### 3.10 Rule (Reglas de automatización pragmáticas para V0.1)
+Para evitar la sobre-ingeniería de un motor de reglas JSON abstracto en el MVP:
+- Las reglas de negocio base se ejecutan mediante **event handlers tipados en el backend** (`onFeedbackReceived`).
+- La tabla `Rule` almacena configuraciones editables por el negocio: umbral de calificación (`min_rating`), puntos a otorgar (`points_to_award`), título del badge/reconocimiento (`recognition_title`) y estado activo/inactivo (`is_active`).
 
-```text
-Organization 1 ──── N Location
-```
+### 3.11 PointLedgerEntry (Libro contable inmutable)
+Toda asignación o canje de puntos se registra como una transacción atómica:
+- Nunca se hace `UPDATE employee SET points = points + 10`.
+- Admite estados: `pending` (en espera de consolidación anti-fraude o cierre de turno) y `confirmed`.
+- Permite trazabilidad absoluta, auditoría, reversión por fraude y recalcular balances sumando entradas.
 
-El campo `location` del frontend debería convertirse en una entidad, no mantenerse como texto dentro de `Client`.
+### 3.12 Reward y RewardAssignment
+- **`Reward`**: Catálogo de incentivos configurado por el negocio (ej. "Día libre", "Bono $15.000", "Voucher cena").
+- **`RewardAssignment`**: Asignación particular a un empleado cuando canjea puntos o por decisión del manager. Estados: `pending`, `approved`, `delivered`, `cancelled`.
 
-### Employee
+### 3.13 Budget y BudgetMovement (Presupuesto)
+- Para V0.1 se recomienda usar un control presupuestario simple (`monthly_reward_budget` en `Organization`).
+- En fases avanzadas, `Budget` y `BudgetMovement` controlan el cupo monetario reservado y distribuido mes a mes sin tocar procesamiento de pagos bancarios.
 
-Representa a la persona cuyo desempeño será medido. Debe pertenecer a una `Location` y puede opcionalmente estar vinculada a un `User` si necesita iniciar sesión.
+---
 
-Los valores `performanceScore`, `satisfactionScore`, `feedbackCount`, `recognitionCount` y `points` deberían calcularse desde eventos, reconocimientos y movimientos, en lugar de ser la fuente principal almacenada en `Employee`.
-
-### Feedback
-
-Representa la respuesta original del cliente. No requiere autenticación, puede no identificar a un empleado y puede contener varias dimensiones.
-
-Campos principales:
-
-```text
-id
-organization_id
-location_id
-employee_id nullable
-qr_code_id nullable
-rating
-comment nullable
-source
-created_at
-```
-
-### FeedbackDimension
-
-Tabla intermedia para resolver la relación muchos-a-muchos entre `Feedback` y `Dimension`. Es preferible a guardar `dimensions[]` como un array porque permite filtrar, calcular métricas y aplicar reglas por dimensión.
-
-### PerformanceEvent
-
-Es la entidad central del producto. Cada feedback válido puede generar uno o más eventos, por ejemplo un evento de amabilidad y otro de resolución.
-
-Campos mínimos definidos por el PRD:
-
-```text
-id
-organization_id
-location_id
-employee_id
-source
-type
-dimension_id
-score
-value
-evidence
-metadata
-created_at
-```
-
-Las fuentes iniciales pueden ser `customer` y `manager`, dejando preparado el modelo para `peer`, `system`, `goal` y `learning`.
-
-### Recognition
-
-Representa un reconocimiento manual o automático. Debe conservar el usuario que lo creó o la regla que lo originó.
-
-### PointLedgerEntry
-
-Los puntos deben modelarse como un ledger, no como un simple campo `Employee.points`. Cada movimiento debe tener un origen y no debe modificarse silenciosamente.
-
-Ejemplo:
+## 4. Flujo de datos completo (con Anti-Abuso y Lead Capture)
 
 ```text
-+10 Customer recognition
-+10 Manager recognition
-+5 Resolution highlight
+1. Cliente escanea QR (Mesa 4)
+   │
+2. Front resuelve Token público → Location + Organization + Lista de Empleados
+   │
+3. Cliente evalúa experiencia:
+   ├── Rating (1 a 5)
+   ├── Selecciona Empleado (o "No recuerdo")
+   ├── Selecciona Dimensiones destacadas (Amabilidad, Rapidez)
+   └── Comentario opcional
+   │
+4. Paso de fidelización (Incentivo opcional):
+   └── "¿Querés participar del sorteo mensual? Dejanos tu email/teléfono"
+       ├── Si ingresa dato: Se crea/actualiza CUSTOMER (marketing opt-in)
+       └── Si omite dato: Continúa como anónimo
+   │
+5. Envío de FEEDBACK + Silent Checks:
+   ├── Se envía client_fingerprint + ip_hash
+   ├── Motor Anti-Abuso evalúa:
+   │   ├── ¿Mismo dispositivo calificó al mismo empleado en < 24hs?
+   │   └── ¿Ráfaga anómala de calificaciones hacia este empleado?
+   │       ├── SÍ → Feedback.status = "flagged", Puntos = "pending"
+   │       └── NO → Feedback.status = "approved"
+   │
+6. Generación de PERFORMANCE_EVENT:
+   ├── Evento individual de talento (si hay empleado)
+   └── Evento de satisfacción de sucursal (si no hay empleado)
+   │
+7. Evaluación de Reglas (Rule Engine):
+   ├── Si rating >= 5 y status = "approved":
+   │   ├── Crea RECOGNITION ("Customer Hero")
+   │   └── Genera POINT_LEDGER_ENTRY (+10 puntos)
+   │
+8. Dashboards:
+   ├── Empleado: visualiza feedback positivo y puntos en su perfil
+   └── Manager: visualiza métricas de sucursal y alertas de fraude si hubo casos "flagged"
 ```
 
-El balance se obtiene sumando los movimientos del empleado.
+---
 
-### Rule
+## 5. Recomendaciones de migración e infraestructura
 
-Representa las reglas automáticas. Para V0.1 se recomienda almacenar `conditions` y `actions` como JSON, sin construir un lenguaje de reglas propio.
+### 5.1 Migración obligatoria a PostgreSQL
+El esquema actual usa SQLite (`BE/prisma/schema.prisma`). Se recomienda migrar inmediatamente a **PostgreSQL** antes de crear las migraciones de este modelo:
+- Soporte nativo y rápido de campos JSON (`metadata`, `conditions_config`).
+- Tipos de datos financieros seguros (`Decimal`).
+- Alta concurrencia para múltiples comensales escaneando QRs simultáneamente.
+- Enums nativos y transacciones ACID estrictas para el ledger de puntos.
 
-Ejemplo:
+### 5.2 Evolución de `Client` a `Organization`
+Para no romper de golpe el backend existente:
+- En una primera etapa se puede mantener el nombre de tabla `clients` mapeado a `Organization` (`@@map("clients")`), o migrar rutas de forma paralela (`/api/organizations` y alias retrocompatible para `/api/clients`).
+- Deprecar el campo `User.clientId` a favor de `OrganizationMember`.
 
-```text
-WHEN feedback_received
-IF rating >= 5 AND employee != null
-THEN add_points(10)
-AND create_recognition("Customer Hero")
-```
+### 5.3 Implementación de índices críticos
+Para garantizar lecturas rápidas en dashboards y validaciones anti-abuso:
+- `FEEDBACK(client_fingerprint, employee_id, created_at)`: Para verificar límites de 24hs en < 5ms.
+- `PERFORMANCE_EVENT(employee_id, created_at)`: Para métricas y dashboards de talento.
+- `POINT_LEDGER_ENTRY(employee_id, status)`: Para cálculo de balance de puntos.
 
-### Reward y RewardAssignment
+---
 
-`Reward` representa una recompensa configurada por la organización. `RewardAssignment` representa una asignación concreta a un empleado.
+## 6. Orden sugerido de implementación por fases
 
-La separación permite entregar la misma recompensa varias veces a distintos empleados.
+### Fase 1 — Base Organizacional y Multi-Tenancy (PostgreSQL)
+- Configurar PostgreSQL en Prisma.
+- Crear modelos: `Organization`, `Location`, `User`, `OrganizationMember`, `Employee`.
+- Implementar asignación de `Manager` a sucursal vía `location_id` en `OrganizationMember`.
+- Migrar usuarios actuales.
 
-Estados sugeridos:
+### Fase 2 — Flujo QR, Feedback, Anti-Abuso y Leads
+- Crear modelos: `QRCode`, `Customer`, `Feedback`, `Dimension`, `FeedbackDimension`.
+- Endpoint público: `GET /api/public/qr/:token` (datos de sucursal y lista de colaboradores activos).
+- Endpoint público: `POST /api/public/feedback` con captura de huella, validación de rate limit (24h) y captura opcional de `Customer`.
 
-```text
-pending
-awarded
-delivered
-cancelled
-```
+### Fase 3 — Motor de Desempeño y Evidencia
+- Crear modelo: `PerformanceEvent`.
+- Generar eventos automáticamente a partir de feedbacks válidos (`status = 'approved'`).
+- Distinguir eventos individuales vs. eventos de sucursal.
 
-### QRCode
+### Fase 4 — Reconocimientos y Ledger de Puntos
+- Crear modelos: `Recognition`, `PointLedgerEntry`.
+- Implementar reglas tipadas en backend (`feedback_5_stars -> +10 pts + recognition`).
+- Puntos en estado `confirmed` para feedbacks limpios y `pending` para sospechosos.
 
-Cada sucursal puede tener uno o más códigos QR. El QR debe contener solamente un token o identificador público; no debe almacenar información crítica.
+### Fase 5 — Catálogo de Recompensas y Moderación
+- Crear modelos: `Reward`, `RewardAssignment`.
+- Canje de puntos deduciendo del ledger.
+- Panel de Manager para auditar y aprobar/rechazar feedbacks marcados como `flagged`.
 
-Flujo de resolución:
+### Fase 6 — Dashboards y Reportes CRM
+- Dashboard de Employee (evidencia, reconocimientos, evolución de puntos).
+- Dashboard de Manager (satisfacción de sucursal, colaboradores destacados, alertas).
+- Módulo de Exportación de Clientes (CRM) para el Owner.
 
-```text
-QRCode → Location → Organization
-```
+---
 
-### Budget y BudgetMovement
+## 7. Documentación complementaria
 
-El PRD solicita tracking de presupuesto, pero no procesamiento de dinero. `Budget` puede manejar el presupuesto mensual y `BudgetMovement` registrar reservas y distribución asociadas a recompensas.
-
-## 4. Flujo de datos principal
-
-```text
-QR Code
-   ↓
-Location
-   ↓
-Feedback
-   ├── rating
-   ├── employee_id opcional
-   ├── comment
-   └── dimensions
-          ↓
-  FeedbackDimension
-          ↓
-PerformanceEvent
-          ↓
-Rule evaluation
-   ├── Recognition
-   ├── PointLedgerEntry
-   └── RewardAssignment
-          ↓
-Employee Dashboard
-Manager Dashboard
-```
-
-Ejemplo:
-
-```text
-Cliente escanea QR de una sucursal
-        ↓
-Envía rating 5
-        ↓
-Selecciona empleado
-        ↓
-Selecciona Amabilidad y Resolución
-        ↓
-Se crea Feedback
-        ↓
-Se crean FeedbackDimension
-        ↓
-Se crean PerformanceEvent
-        ↓
-Una regla detecta rating >= 5
-        ↓
-Se crea Recognition "Customer Hero"
-        ↓
-Se agregan puntos al ledger
-        ↓
-El manager y el empleado ven la evidencia
-```
-
-## 5. Recomendaciones de migración
-
-### 5.1 Evolucionar `Client` a `Organization`
-
-Mantener temporalmente `Client` puede evitar romper las rutas actuales, pero las nuevas APIs deberían orientarse al dominio del PRD:
-
-```text
-/api/organizations
-/api/locations
-/api/employees
-/api/feedback
-/api/events
-/api/recognitions
-/api/rules
-/api/rewards
-```
-
-### 5.2 Reemplazar progresivamente `User.clientId`
-
-El campo puede conservarse durante una primera migración, pero a futuro conviene crear `OrganizationMember` para separar pertenencia y autorización.
-
-### 5.3 Implementar sucursales antes que empleados
-
-La relación recomendada es:
-
-```text
-Employee → Location → Organization
-```
-
-Esto permite que un manager acceda únicamente a los empleados de su sucursal.
-
-### 5.4 Evitar métricas derivadas como fuente de verdad
-
-Las métricas deben derivarse de:
-
-```text
-Feedback
-PerformanceEvent
-Recognition
-PointLedgerEntry
-RewardAssignment
-```
-
-Podrán materializarse posteriormente mediante vistas o procesos de agregación si el volumen lo requiere.
-
-### 5.5 Considerar PostgreSQL
-
-El PRD recomienda PostgreSQL, mientras que el esquema actual utiliza SQLite:
-
-```prisma
-datasource db {
-  provider = "sqlite"
-}
-```
-
-SQLite puede servir para desarrollo inicial, pero PostgreSQL es más apropiado para multi-tenancy, dashboards y campos JSON (`metadata`, `conditions`, `actions`).
-
-## 6. Orden sugerido de implementación
-
-### Fase 1 — Base organizacional
-
-```text
-Organization o Client temporal
-Location
-OrganizationMember
-Employee
-```
-
-Actualizar los roles a:
-
-```text
-SUPERADMIN
-OWNER
-MANAGER
-EMPLOYEE
-```
-
-### Fase 2 — Feedback
-
-```text
-QRCode
-Feedback
-Dimension
-FeedbackDimension
-```
-
-Endpoints iniciales sugeridos:
-
-```text
-GET /feedback/:locationId
-POST /feedback
-```
-
-### Fase 3 — Performance
-
-```text
-PerformanceEvent
-```
-
-Crear automáticamente eventos a partir de cada feedback válido.
-
-### Fase 4 — Reconocimientos y puntos
-
-```text
-Recognition
-PointLedgerEntry
-```
-
-Implementar reconocimiento manual y automático.
-
-### Fase 5 — Reglas y recompensas
-
-```text
-Rule
-Reward
-RewardAssignment
-Budget
-BudgetMovement
-```
-
-### Fase 6 — Dashboards
-
-Construir los dashboards a partir de consultas sobre:
-
-```text
-Feedback
-PerformanceEvent
-Recognition
-PointLedgerEntry
-RewardAssignment
-```
-
-## 7. Conclusión
-
-El esquema actual de `User` y `Client` es una base de administración de clientes, pero todavía no representa la plataforma de activación del talento definida en el PRD.
-
-La entidad que debe guiar el diseño futuro es `PerformanceEvent`, conectando la cadena:
-
-```text
-Organization
- → Location
- → Employee
- → Feedback
- → PerformanceEvent
- → Recognition
- → Points
- → Reward
-```
+Para conocer el detalle técnico específico, heurísticas de rate-limiting, detección de ráfagas y flujos UX contra el auto-reconocimiento, consultar:
+- [docs/propuesta-mecanismos-contra-abuso-autoreconocimiento.md](file:///c:/Users/luigi/Desktop/devtemp/Ceibo.studio/docs/propuesta-mecanismos-contra-abuso-autoreconocimiento.md)
