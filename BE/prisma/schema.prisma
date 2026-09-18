@@ -10,29 +10,356 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  name         String
-  role         String    @default("CUSTOMER") // SUPERADMIN | CUSTOMER
-  clientId     String?
-  client       Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  passwordHash        String
+  name                String
+  role                String               @default("CUSTOMER") // SUPERADMIN | CUSTOMER | OWNER | MANAGER | EMPLOYEE
+  organizationId      String?
+  organization        Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships         OrganizationMember[]
+  employees           Employee[]
+  recognitionsCreated Recognition[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@index([role])
+  @@index([organizationId])
 }
 
-model Client {
-  id          String   @id @default(cuid())
-  name        String
-  email       String?  @unique
-  phone       String?
-  contactName String?
-  status      String   @default("active") // active | inactive
-  users       User[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model Organization {
+  id                  String               @id @default(cuid())
+  name                String
+  email               String?              @unique
+  phone               String?
+  contactName         String?
+  status              String               @default("active") // active | inactive
+  monthlyRewardBudget Float                @default(0)
+  users               User[]
+  members             OrganizationMember[]
+  locations           Location[]
+  customers           Customer[]
+  dimensions          Dimension[]
+  feedbacks           Feedback[]
+  performanceEvents   PerformanceEvent[]
+  recognitions        Recognition[]
+  rules               Rule[]
+  rewards             Reward[]
+  budgets             Budget[]
+  budgetMovements     BudgetMovement[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@index([status])
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locationId     String?
+  location       Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  role           String       @default("MANAGER") // OWNER | MANAGER | EMPLOYEE
+  status         String       @default("active") // active | inactive
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([locationId])
+}
+
+model Location {
+  id                String               @id @default(cuid())
+  organizationId    String
+  organization      Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name              String
+  address           String?
+  phone             String?
+  status            String               @default("active") // active | inactive
+  employees         Employee[]
+  qrCodes           QRCode[]
+  feedbacks         Feedback[]
+  performanceEvents PerformanceEvent[]
+  managers          OrganizationMember[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+model Employee {
+  id                String               @id @default(cuid())
+  locationId        String
+  location          Location             @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  userId            String?
+  user              User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name              String
+  email             String?
+  phone             String?
+  position          String?              // e.g. "Camarero", "Barista", "Cajero"
+  avatarUrl         String?
+  status            String               @default("active") // active | inactive
+  feedbacks         Feedback[]
+  performanceEvents PerformanceEvent[]
+  recognitions      Recognition[]
+  ledgerEntries     PointLedgerEntry[]
+  rewardAssignments RewardAssignment[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([locationId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Customer {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String?
+  phone          String?
+  name           String?
+  marketingOptIn Boolean      @default(false)
+  feedbacks      Feedback[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+}
+
+model QRCode {
+  id         String     @id @default(cuid())
+  locationId String
+  location   Location   @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  token      String     @unique
+  label      String?    // e.g. "Mesa 4", "Barra", "Caja"
+  type       String     @default("table") // table | counter | takeout | general
+  status     String     @default("active") // active | inactive
+  feedbacks  Feedback[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([token])
+  @@index([locationId])
+}
+
+model Dimension {
+  id                 String              @id @default(cuid())
+  organizationId     String
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name               String              // "Amabilidad", "Rapidez", "Resolución"
+  description        String?
+  icon               String?
+  active             Boolean             @default(true)
+  feedbackDimensions FeedbackDimension[]
+  performanceEvents  PerformanceEvent[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([organizationId])
+}
+
+model Feedback {
+  id                String              @id @default(cuid())
+  organizationId    String
+  organization      Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  locationId        String
+  location          Location            @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  employeeId        String?
+  employee          Employee?           @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  qrCodeId          String?
+  qrCode            QRCode?             @relation(fields: [qrCodeId], references: [id], onDelete: SetNull)
+  customerId        String?
+  customer          Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  rating            Int                 // 1 to 5
+  comment           String?
+  source            String              @default("qr") // qr | link
+  clientFingerprint String?
+  ipHash            String?
+  verificationLevel String              @default("anonymous") // verified | anonymous
+  status            String              @default("approved")  // approved | flagged | rejected
+  flagReason        String?             // e.g. "VELOCITY_BURST", "DUPLICATE_DEVICE_24H"
+  dimensions        FeedbackDimension[]
+  performanceEvents PerformanceEvent[]
+  createdAt         DateTime            @default(now())
+
+  @@index([organizationId])
+  @@index([locationId])
+  @@index([employeeId, createdAt])
+  @@index([clientFingerprint, employeeId, createdAt])
+  @@index([status])
+}
+
+model FeedbackDimension {
+  feedbackId  String
+  feedback    Feedback  @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  dimensionId String
+  dimension   Dimension @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
+  highlighted Boolean   @default(true)
+
+  @@id([feedbackId, dimensionId])
+}
+
+model PerformanceEvent {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  locationId     String
+  location       Location           @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  employeeId     String?
+  employee       Employee?          @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  feedbackId     String?
+  feedback       Feedback?          @relation(fields: [feedbackId], references: [id], onDelete: SetNull)
+  dimensionId    String?
+  dimension      Dimension?         @relation(fields: [dimensionId], references: [id], onDelete: SetNull)
+  source         String             @default("customer") // customer | manager | peer | system
+  type           String             @default("recognition") // recognition | rating | alert
+  score          Int                @default(5)
+  value          Float              @default(0)
+  evidence       String?
+  metadata       String?            // JSON string
+  recognitions   Recognition[]
+  ledgerEntries  PointLedgerEntry[]
+  createdAt      DateTime           @default(now())
+
+  @@index([organizationId])
+  @@index([locationId])
+  @@index([employeeId, createdAt])
+}
+
+model Recognition {
+  id                 String             @id @default(cuid())
+  organizationId     String
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeId         String
+  employee           Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  performanceEventId String?
+  performanceEvent   PerformanceEvent?  @relation(fields: [performanceEventId], references: [id], onDelete: SetNull)
+  createdByUserId    String?
+  createdByUser      User?              @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  ruleId             String?
+  rule               Rule?              @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  category           String             @default("Customer Hero")
+  message            String?
+  source             String             @default("automatic") // automatic | manager
+  ledgerEntries      PointLedgerEntry[]
+  createdAt          DateTime           @default(now())
+
+  @@index([organizationId])
+  @@index([employeeId])
+}
+
+model Rule {
+  id               String             @id @default(cuid())
+  organizationId   String
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name             String             // e.g. "5 Estrellas = Reconocimiento + 10 Pts"
+  eventType        String             @default("feedback_received")
+  minRating        Int                @default(5)
+  pointsToAward    Int                @default(10)
+  recognitionTitle String             @default("Customer Hero")
+  isActive         Boolean            @default(true)
+  conditionsConfig String?            // JSON string
+  recognitions     Recognition[]
+  ledgerEntries    PointLedgerEntry[]
+  rewards          Reward[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([organizationId])
+  @@index([isActive])
+}
+
+model PointLedgerEntry {
+  id                 String            @id @default(cuid())
+  employeeId         String
+  employee           Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  performanceEventId String?
+  performanceEvent   PerformanceEvent? @relation(fields: [performanceEventId], references: [id], onDelete: SetNull)
+  recognitionId      String?
+  recognition        Recognition?      @relation(fields: [recognitionId], references: [id], onDelete: SetNull)
+  rewardAssignmentId String?
+  rewardAssignment   RewardAssignment? @relation(fields: [rewardAssignmentId], references: [id], onDelete: SetNull)
+  ruleId             String?
+  rule               Rule?             @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  amount             Int               // +10, -50, etc.
+  reason             String
+  status             String            @default("confirmed") // pending | confirmed | cancelled
+  createdAt          DateTime          @default(now())
+
+  @@index([employeeId, status])
+  @@index([createdAt])
+}
+
+model Reward {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ruleId         String?
+  rule           Rule?              @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  title          String             // e.g. "Día Libre", "Bono $15.000", "Voucher Cena"
+  description    String?
+  pointsRequired Int                @default(100)
+  monetaryValue  Float              @default(0)
+  active         Boolean            @default(true)
+  assignments    RewardAssignment[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([organizationId])
+  @@index([active])
+}
+
+model RewardAssignment {
+  id              String             @id @default(cuid())
+  rewardId        String
+  reward          Reward             @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  employeeId      String
+  employee        Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  status          String             @default("pending") // pending | approved | delivered | cancelled
+  awardedAt       DateTime           @default(now())
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  ledgerEntries   PointLedgerEntry[]
+  budgetMovements BudgetMovement[]
+
+  @@index([rewardId])
+  @@index([employeeId])
+  @@index([status])
+}
+
+model Budget {
+  id                String       @id @default(cuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  year              Int
+  month             Int
+  monthlyBudget     Float        @default(0)
+  reservedAmount    Float        @default(0)
+  distributedAmount Float        @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@unique([organizationId, year, month])
+  @@index([organizationId])
+}
+
+model BudgetMovement {
+  id                 String            @id @default(cuid())
+  organizationId     String
+  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rewardAssignmentId String?
+  rewardAssignment   RewardAssignment? @relation(fields: [rewardAssignmentId], references: [id], onDelete: SetNull)
+  type               String            // credit | debit | reserve
+  amount             Float
+  description        String?
+  createdAt          DateTime          @default(now())
+
+  @@index([organizationId])
 }
