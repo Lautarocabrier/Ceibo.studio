@@ -74,13 +74,35 @@ export async function seedDemoData() {
       console.log(`✅ Sucursal demo creada: ${location.name}`);
     }
 
-    // 3. Crear colaboradores demo
-    const employeeNames = [
-      { name: 'Martín Gómez', position: 'Camarero', email: 'martin@cafemartinez.demo' },
-      { name: 'Sofía Rodríguez', position: 'Barista', email: 'sofia@cafemartinez.demo' },
+    // 3. Crear colaboradores demo con avatares fotográficos
+    const employeeData = [
+      {
+        name: 'Martín Gómez',
+        position: 'Camarero',
+        email: 'martin@cafemartinez.demo',
+        avatarUrl: '/uploads/employees/martin_gomez.jpg',
+      },
+      {
+        name: 'Sofía Rodríguez',
+        position: 'Barista',
+        email: 'sofia@cafemartinez.demo',
+        avatarUrl: '/uploads/employees/sofia_rodriguez.jpg',
+      },
+      {
+        name: 'Camila Torres',
+        position: 'Supervisora General',
+        email: 'camila@cafemartinez.demo',
+        avatarUrl: '/uploads/employees/camila_torres.jpg',
+      },
+      {
+        name: 'Lucas Barista',
+        position: 'Especialista Barista',
+        email: 'lucas@cafemartinez.demo',
+        avatarUrl: '/uploads/employees/lucas_barista.jpg',
+      },
     ];
 
-    for (const emp of employeeNames) {
+    for (const emp of employeeData) {
       const existingEmp = await prisma.employee.findFirst({
         where: { locationId: location.id, name: emp.name },
       });
@@ -91,10 +113,20 @@ export async function seedDemoData() {
             name: emp.name,
             position: emp.position,
             email: emp.email,
+            avatarUrl: emp.avatarUrl,
             status: 'active',
           },
         });
         console.log(`✅ Empleado demo creado: ${emp.name}`);
+      } else {
+        await prisma.employee.update({
+          where: { id: existingEmp.id },
+          data: {
+            avatarUrl: emp.avatarUrl,
+            position: emp.position,
+          },
+        });
+        console.log(`✅ Empleado demo actualizado con avatar: ${emp.name}`);
       }
     }
 
