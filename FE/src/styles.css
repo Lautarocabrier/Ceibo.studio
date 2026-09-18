@@ -335,3 +335,68 @@ form input:focus { border-color: #c54d2d; }
   .employee-form-fields .modal-actions { grid-column: auto; }
   .modal { padding: 23px; }
 }
+
+/* Nuevos estilos para Auditoría, CRM, Perfil y QR Público */
+.data-table-wrap { background: #fffdf8; border: 1px solid #ddd9cf; border-radius: 14px; overflow-x: auto; margin-top: 15px; box-shadow: 0 4px 15px rgba(48, 57, 52, .05); }
+.data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+.data-table th { background: #f7f4ed; color: #48504b; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 12px 16px; border-bottom: 1px solid #ddd9cf; }
+.data-table td { padding: 14px 16px; border-bottom: 1px solid #eee8dc; color: #303934; }
+.data-table tr:last-child td { border-bottom: 0; }
+.data-table tr:hover { background: #faf7f0; }
+.table-search-bar { display: flex; gap: 10px; margin-bottom: 15px; max-width: 480px; }
+.table-search-bar input { background: #fffdf8; border: 1px solid #ddd9cf; border-radius: 8px; padding: 8px 14px; font-size: 13px; flex: 1; outline: none; }
+.table-search-bar input:focus { border-color: #c54d2d; }
+
+.badge { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+.badge--flagged { background: #fff4e5; color: #b76e00; border: 1px solid #ffe2b3; }
+.badge--approved { background: #e4f0e6; color: #3f7650; }
+.badge--rejected { background: #fbeae5; color: #c54d2d; }
+.badge--verified { background: #e5f1fb; color: #1877f2; }
+.badge--optin { background: #e4f0e6; color: #2e7d32; font-size: 9px; }
+
+.audit-actions { display: flex; gap: 8px; }
+.approve-btn { background: #3f7650; color: #fff; border: 0; border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+.approve-btn:hover { opacity: .9; }
+.reject-btn { background: #c54d2d; color: #fff; border: 0; border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+.reject-btn:hover { opacity: .9; }
+
+.points-badge-wrap { display: flex; gap: 8px; align-items: center; }
+.points-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-weight: 700; font-size: 11px; }
+.points-pill--confirmed { background: #e4f0e6; color: #2e7d32; }
+.points-pill--pending { background: #fff3e0; color: #e65100; }
+
+.emp-profile-modal { max-width: 540px !important; }
+.profile-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 18px 0; }
+.profile-stat-box { background: #fffdf8; border: 1px solid #ddd9cf; border-radius: 10px; padding: 14px; text-align: center; }
+.profile-stat-box span { display: block; font-size: 11px; color: #69706b; text-transform: uppercase; margin-bottom: 4px; }
+.profile-stat-box strong { font-size: 24px; color: #303934; }
+.recognitions-list { display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; margin-top: 10px; }
+.recognition-row { background: #fffdf8; border: 1px solid #ebe7dd; border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+.recognition-row strong { color: #c54d2d; font-size: 12px; }
+.recognition-row small { color: #7c827b; font-size: 11px; }
+
+/* Flujo público de Feedback comensal */
+.feedback-shell { min-height: 100vh; background: #f3f0e9; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; }
+.feedback-card { background: #fffdf8; border: 1px solid #ddd9cf; border-radius: 20px; box-shadow: 0 16px 40px rgba(48, 57, 52, .12); max-width: 460px; width: 100%; padding: 32px 28px; }
+.feedback-header { text-align: center; margin-bottom: 24px; }
+.feedback-header h1 { font-size: 26px; font-weight: 700; color: #303934; margin: 8px 0 4px; letter-spacing: -.03em; }
+.feedback-header p { font-size: 13px; color: #69706b; }
+.stars-selector { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
+.star-btn { background: transparent; border: 0; font-size: 38px; color: #ddd9cf; cursor: pointer; transition: transform .15s, color .15s; padding: 0 4px; line-height: 1; }
+.star-btn.is-active { color: #c54d2d; transform: scale(1.1); }
+.collaborator-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.collab-chip { background: #f7f4ed; border: 1px solid #ddd9cf; border-radius: 20px; padding: 8px 14px; font-size: 12px; color: #303934; cursor: pointer; transition: all .2s; }
+.collab-chip.is-selected { background: #303934; color: #f6f2e9; border-color: #303934; }
+.dimensions-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.dim-chip { background: #f7f4ed; border: 1px solid #ddd9cf; border-radius: 8px; padding: 6px 12px; font-size: 11px; color: #59615b; cursor: pointer; }
+.dim-chip.is-selected { background: #f5e2d9; border-color: #c54d2d; color: #c54d2d; font-weight: 600; }
+.feedback-textarea { width: 100%; border: 1px solid #ddd9cf; border-radius: 10px; padding: 12px; font-family: inherit; font-size: 13px; min-height: 80px; margin-bottom: 18px; outline: none; background: #fff; resize: vertical; }
+.feedback-textarea:focus { border-color: #c54d2d; }
+.lead-box { background: #f7f4ed; border: 1px dashed #d7d3c9; border-radius: 12px; padding: 16px; margin-bottom: 22px; }
+.lead-box h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #c54d2d; }
+.lead-box p { font-size: 11px; color: #69706b; margin-bottom: 12px; }
+.lead-box input { background: #fff; border: 1px solid #ddd9cf; border-radius: 6px; padding: 8px 10px; font-size: 12px; width: 100%; margin-bottom: 8px; }
+.lead-box label.optin { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #48504b; cursor: pointer; text-transform: none; margin-top: 4px; }
+.feedback-success-card { text-align: center; padding: 30px 20px; }
+.feedback-success-card span.success-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #e4f0e6; color: #3f7650; font-size: 28px; margin-bottom: 16px; }
+
