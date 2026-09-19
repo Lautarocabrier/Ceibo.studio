@@ -1,16 +1,18 @@
 import { useNavigate } from 'react-router-dom'
 import Brand from '../components/common/Brand'
+import LandingFooter from '../components/Landing/LandingFooter'
 
 export default function Landing() {
   const navigate = useNavigate()
   return (
-    <main className="landing-shell">
+    <div className="landing-shell">
       <header className="site-header">
         <Brand />
         <button className="login-trigger" onClick={() => navigate('/login')}>
           Ingresar <span aria-hidden="true">↗</span>
         </button>
       </header>
+
       <section className="landing-content">
         <div className="eyebrow">Plataforma de gestión · 2026</div>
         <h1>Naturaleza<br /><em>que nos une.</em></h1>
@@ -19,13 +21,12 @@ export default function Landing() {
           Ingresar a la plataforma <span aria-hidden="true">→</span>
         </button>
       </section>
-      <footer className="landing-footer">
-        <span>CEIBO / EXPERIENCIAS QUE CONECTAN</span>
-        <span>BUENOS AIRES · ARGENTINA</span>
-      </footer>
+
       <div className="botanical-shape" aria-hidden="true">
         <span /><span /><span />
       </div>
-    </main>
+
+      <LandingFooter />
+    </div>
   )
 }
