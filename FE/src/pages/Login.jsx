@@ -43,7 +43,6 @@ export default function Login({ onLogin }) {
       <div className="auth-panel auth-panel--form">
         <div className="form-wrap">
           <div className="form-heading">
-            <CeiboMark small />
             <span className="eyebrow">Acceso privado</span>
             <h2>Ingresar</h2>
             <p>Entrá a tu espacio de trabajo Ceibo.</p>

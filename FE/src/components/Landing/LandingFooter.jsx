@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import bgImage from '../../assets/plants footer/background.png'
-import leftPlant from '../../assets/plants footer/lefth-plant.png'
-import rightPlant from '../../assets/plants footer/rigth-plant.png'
-import sloganImg from '../../assets/plants footer/slogan-personas-que-hacen-crecer-empresas.png'
+import bgImage from '../../assets/plants footer/background.webp'
+import leftPlant from '../../assets/plants footer/lefth-plant.webp'
+import rightPlant from '../../assets/plants footer/rigth-plant.webp'
+import sloganImg from '../../assets/plants footer/slogan-personas-que-hacen-crecer-empresas.webp'
 import Modal from '../common/Modal'
 
 export default function LandingFooter() {

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import Brand from '../components/common/Brand'
 import LandingFooter from '../components/Landing/LandingFooter'
+import HeroBotanicalIllustration from '../components/Landing/HeroBotanicalIllustration'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -15,16 +16,14 @@ export default function Landing() {
 
       <section className="landing-content">
         <div className="eyebrow">Plataforma de gestión · 2026</div>
-        <h1>Naturaleza<br /><em>que nos une.</em></h1>
-        <p className="landing-copy">Un espacio simple para hacer crecer lo que importa.</p>
+        <h1>Potenciamos<br /><em>tu equipo</em></h1>
+        <p className="landing-copy">Las personas motivadas generan resultados extraordinarios</p>
         <button className="landing-action" onClick={() => navigate('/login')}>
           Ingresar a la plataforma <span aria-hidden="true">→</span>
         </button>
       </section>
 
-      <div className="botanical-shape" aria-hidden="true">
-        <span /><span /><span />
-      </div>
+      <HeroBotanicalIllustration />
 
       <LandingFooter />
     </div>
