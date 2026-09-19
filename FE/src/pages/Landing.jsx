@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import Brand from '../components/common/Brand'
 import LandingFooter from '../components/Landing/LandingFooter'
 import HeroBotanicalIllustration from '../components/Landing/HeroBotanicalIllustration'
+import GlobalTalentSequence from '../components/Landing/GlobalTalentSequence'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -25,7 +26,11 @@ export default function Landing() {
 
       <HeroBotanicalIllustration />
 
+      {/* Interactive Global Talent Sequence Showcase */}
+      <GlobalTalentSequence />
+
       <LandingFooter />
     </div>
   )
 }
+

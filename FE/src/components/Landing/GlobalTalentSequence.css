@@ -1,0 +1,331 @@
+/* ==========================================================================
+   Global Talent Interactive Section - Minimalist Teleportation Sequence
+   Pure #000000 Fullscreen | Lateral Fixed Typography | Clickable Portal
+   ========================================================================== */
+
+.global-talent-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #000000;
+  color: #f6f2e9;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(32px, 6vh, 64px) clamp(24px, 5vw, 80px);
+  box-sizing: border-box;
+  font-family: 'DM Sans', sans-serif;
+  user-select: none;
+  isolation: isolate;
+}
+
+/* Subtle background texture */
+.global-talent-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 100% 100%, 64px 64px, 64px 64px;
+  opacity: 0.7;
+  z-index: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Stage: Balanced Lateral Typography & Clickable Central Visor
+   -------------------------------------------------------------------------- */
+.global-talent-stage {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  justify-content: center;
+  gap: clamp(32px, 5vw, 96px);
+  width: 100%;
+  max-width: 1480px;
+  margin: auto;
+}
+
+/* Lateral Columns */
+.global-talent-col {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.global-talent-col--left {
+  text-align: right;
+  align-items: flex-end;
+  justify-self: end;
+}
+
+.global-talent-col--right {
+  text-align: left;
+  align-items: flex-start;
+  justify-self: start;
+}
+
+.global-talent-col-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #c54d2d;
+  margin-bottom: 12px;
+  min-height: 16px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.global-talent-col-label.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.global-talent-phrase {
+  margin: 0;
+  font-size: clamp(38px, 5.2vw, 80px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: #f6f2e9;
+  white-space: nowrap;
+}
+
+.global-talent-emphasis {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  color: #c54d2d;
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   Typewriter Effect (100% Space Reserved in Advance - Zero Layout Shift)
+   -------------------------------------------------------------------------- */
+.typewriter-block {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.typewriter-char-unit {
+  position: relative;
+  display: inline;
+}
+
+.typewriter-char {
+  display: inline;
+  color: inherit;
+  transition: opacity 0.04s ease;
+}
+
+.typewriter-char.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  user-select: none;
+  pointer-events: none;
+}
+
+.typewriter-char.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Floating Caret takes ZERO width so it never displaces any text or grid elements */
+.typewriter-floating-caret {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  width: 0;
+  height: 100%;
+  overflow: visible;
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-weight: 300;
+  font-style: normal;
+  color: #c54d2d;
+  pointer-events: none;
+  user-select: none;
+  line-height: 0.9;
+  margin-left: 2px;
+  animation: typewriterCursorBlink 0.65s step-start infinite;
+}
+
+.typewriter-floating-caret.caret-start {
+  left: 0;
+  margin-left: -10px;
+}
+
+.typewriter-floating-caret.caret-done {
+  animation: typewriterCursorBlink 0.75s step-start 4 forwards, typewriterCursorFade 0.6s ease 3s forwards;
+}
+
+@keyframes typewriterCursorBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes typewriterCursorFade {
+  to {
+    opacity: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Central Visor: Eye-Blink Mechanism with Click-Hand Cursor
+   -------------------------------------------------------------------------- */
+.global-talent-portal-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer; /* Mano de click */
+  outline: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Outer circular halo for subtle aesthetic depth */
+.global-talent-portal-halo {
+  position: relative;
+  width: clamp(290px, 36vw, 490px);
+  height: clamp(290px, 36vw, 490px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer; /* Mano de click */
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.global-talent-portal-wrap:hover .global-talent-portal-halo {
+  transform: scale(1.018);
+}
+
+/* Visor Viewport with clip-path eye-blink */
+.global-talent-viewport {
+  position: relative;
+  width: clamp(280px, 35vw, 480px);
+  height: clamp(280px, 35vw, 480px);
+  aspect-ratio: 1 / 1;
+  background-color: #000000;
+  border-radius: 50%;
+  overflow: hidden;
+  will-change: clip-path, transform;
+  transform: translateZ(0);
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.95), inset 0 0 40px rgba(0, 0, 0, 0.8);
+  cursor: pointer; /* Mano de click */
+  transition: box-shadow 0.4s ease;
+}
+
+.global-talent-portal-wrap:hover .global-talent-viewport {
+  box-shadow: 0 0 70px rgba(197, 77, 45, 0.2), 0 0 100px rgba(0, 0, 0, 0.98);
+}
+
+/* Resting State: Full regular circle */
+.global-talent-viewport.phase-resting {
+  clip-path: ellipse(50% 50% at 50% 50%);
+}
+
+/* Closing State: 250ms eye blink close */
+.global-talent-viewport.phase-closing {
+  animation: eyeBlinkClose 250ms cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+/* Blackout State: fully closed, dark */
+.global-talent-viewport.phase-blackout {
+  clip-path: ellipse(50% 0% at 50% 50%);
+}
+
+/* Opening State: 350ms eye blink open */
+.global-talent-viewport.phase-opening {
+  animation: eyeBlinkOpen 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes eyeBlinkClose {
+  0% {
+    clip-path: ellipse(50% 50% at 50% 50%);
+  }
+  100% {
+    clip-path: ellipse(50% 0% at 50% 50%);
+  }
+}
+
+@keyframes eyeBlinkOpen {
+  0% {
+    clip-path: ellipse(50% 0% at 50% 50%);
+  }
+  100% {
+    clip-path: ellipse(50% 50% at 50% 50%);
+  }
+}
+
+/* Strict 1:1 image cover for pixel-identical programmer positioning */
+.global-talent-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+  filter: contrast(1.03) saturate(1.02);
+  cursor: pointer;
+}
+
+/* Subtle optic vignette */
+.global-talent-optic-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, transparent 62%, rgba(0, 0, 0, 0.4) 100%);
+  border-radius: 50%;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Adaptations
+   -------------------------------------------------------------------------- */
+@media (max-width: 1080px) {
+  .global-talent-stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    text-align: center;
+    gap: 36px;
+  }
+
+  .global-talent-col--left,
+  .global-talent-col--right {
+    text-align: center;
+    align-items: center;
+    justify-self: center;
+  }
+
+  .global-talent-phrase {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 768px) {
+  .global-talent-section {
+    padding: 40px 20px;
+    min-height: 80vh;
+  }
+
+  .global-talent-phrase {
+    font-size: clamp(32px, 8vw, 44px);
+  }
+}

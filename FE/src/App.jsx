@@ -4,6 +4,7 @@ import { apiRequest, TOKEN_KEY } from './services/api'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
+import GlobalTalentSequence from './components/Landing/GlobalTalentSequence'
 import SuperAdmin from './pages/SuperAdmin'
 import CustomerAdmin from './pages/CustomerAdmin'
 import PublicFeedback from './pages/PublicFeedback'
@@ -35,6 +36,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/talento-global" element={<GlobalTalentSequence />} />
         <Route path="/login" element={<Login onLogin={setUser} />} />
         <Route
           path="/superadmin"
