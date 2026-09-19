@@ -48,7 +48,7 @@ function resolveDynamicProgramerImages() {
 }
 
 const TEXT_LEFT_1 = 'somos una'
-const TEXT_LEFT_2 = 'empresa'
+const TEXT_LEFT_2 = 'startup'
 const TEXT_RIGHT_1 = 'de talento'
 const TEXT_RIGHT_2 = 'global'
 
